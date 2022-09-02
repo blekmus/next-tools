@@ -1,0 +1,30 @@
+ :root {
+  --dark-text: #9b9c9d;
+  --light-text: #DADADB;
+  --background: #1a1b1e;
+  --foreground: #242429;
+}
+
+
+* {
+    margin: 0;
+    padding: 0;
+    border: 0; 
+
+    /* get rid of the miserable chrome blue border highlight */
+    -webkit-tap-highlight-color: transparent;
+}
+
+*:focus {
+    outline: none;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background-color: var(--background);
+}
+
