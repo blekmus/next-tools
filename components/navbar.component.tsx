@@ -1,5 +1,5 @@
-import { Navbar, Group, ScrollArea, createStyles, Title } from '@mantine/core'
-import { IconHome2, IconTools } from '@tabler/icons'
+import { Navbar, Group, ScrollArea, createStyles, Title, Text } from '@mantine/core'
+import { IconHeart, IconHome2, IconTools } from '@tabler/icons'
 import { NextPage } from 'next'
 import LinksGroup from './navbar.links.component'
 
@@ -59,7 +59,7 @@ const useStyles = createStyles((theme) => ({
 }))
 
 const NavbarMain: NextPage<Props> = ({ activeGroup, activeSubGroup }) => {
-  const { classes } = useStyles()
+  const { classes, theme } = useStyles()
   const links = pathLinks.map((item) => (
     <LinksGroup
       {...item}
@@ -80,6 +80,22 @@ const NavbarMain: NextPage<Props> = ({ activeGroup, activeSubGroup }) => {
 
       <Navbar.Section grow className={classes.links} component={ScrollArea}>
         <div className={classes.linksInner}>{links}</div>
+      </Navbar.Section>
+
+      <Navbar.Section className={classes.footer}>
+        <Group position="center" mt="md" spacing={2}>
+          <Text>Made with love</Text>
+
+          <IconHeart
+            size={22}
+            fill={theme.colors.dark[0]}
+            style={{ paddingTop: '4px' }}
+          />
+
+          <Text>
+            by <a style={{color: theme.colors.dark[0]}} target="_blank"  href="https://github.com/blekmus" rel="noreferrer">blekmus</a>
+          </Text>
+        </Group>
       </Navbar.Section>
     </Navbar>
   )
