@@ -126,7 +126,7 @@ const CsvToVcf: NextPage = () => {
                 sx={{ maxWidth: '300px' }}
                 variant="filled"
                 placeholder="Code (eg: GGG, SCS)"
-                size="lg"
+                size="md"
                 mb="sm"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setCode(e.currentTarget.value)
@@ -137,15 +137,14 @@ const CsvToVcf: NextPage = () => {
                 sx={{ maxWidth: '300px' }}
                 variant="filled"
                 placeholder="Row Header (eg: Number)"
-                size="lg"
-                mb="sm"
+                size="md"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setRowHeader(e.currentTarget.value)
                 }
               />
 
               {error !== '' && (
-                <Text size="sm" color="red" weight={600}>
+                <Text size="sm" mt="sm" color="red" weight={600}>
                   {error}
                 </Text>
               )}

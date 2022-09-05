@@ -1,8 +1,5 @@
 import { Navbar, Group, ScrollArea, createStyles, Title } from '@mantine/core'
-import {
-  IconHome2,
-  IconTools
-} from '@tabler/icons'
+import { IconHome2, IconTools } from '@tabler/icons'
 import { NextPage } from 'next'
 import LinksGroup from './navbar.links.component'
 
@@ -17,7 +14,10 @@ const pathLinks = [
     label: 'Tools',
     icon: IconTools,
     id: 'tools',
-    links: [{ label: 'CSV to VCF', link: '/tools/csv-to-vcf', id: 'csv-to-vcf' }],
+    links: [
+      { label: 'CSV to VCF', link: '/tools/csv-to-vcf', id: 'csv-to-vcf' },
+      { label: 'Anilist Visualizer & Exporter', link: '/tools/anilist-exporter', id: 'anilist-exporter' },
+    ],
   },
 ]
 
