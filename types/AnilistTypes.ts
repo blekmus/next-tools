@@ -28,6 +28,7 @@ interface Activity {
 
 interface Media {
   title: Title
+  duration?: number
 }
 
 interface Title {
@@ -36,11 +37,13 @@ interface Title {
 }
 
 export interface LocalActivity {
-    text: string,
-    createdAt: number,
-    status?: string,
-    type: string,
-    likes: number,
-    replies: number,
-    url: string,
+  text: string
+  createdAt: number
+  status?: string
+  type: string
+  likes: number
+  replies: number
+  url: string
+  progress?: string
+  duration?: number
 }

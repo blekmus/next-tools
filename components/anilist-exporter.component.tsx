@@ -57,6 +57,7 @@ const QUERY_HISTORY = gql`
           replyCount
           siteUrl
           media {
+            duration
             title {
               english
               romaji
@@ -77,15 +78,12 @@ const QUERY_HISTORY = gql`
   }
 `
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip)
 
-function reducer(state: {output: string}, action: {type: string, payload?: string}) {
+function reducer(
+  state: { output: string },
+  action: { type: string; payload?: string }
+) {
   switch (action.type) {
     case 'update':
       return { output: state.output + action.payload + '\n' }
@@ -103,7 +101,8 @@ const AnilistExporter: NextPage = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState('')
-  const [currentChart, setCurrentChart] = useState('likesPerMonth')
+  const [currentChart, setCurrentChart] = useState('likes')
+  const [currentView, setCurrentView] = useState('perMonth')
 
   const [state, dispatch] = useReducer(reducer, { output: '' })
 
@@ -114,6 +113,18 @@ const AnilistExporter: NextPage = () => {
     { id: string; count: number }[]
   >([])
 
+  const [hoursData, setHoursData] = useState<{ id: string; count: number }[]>(
+    []
+  )
+
+  const [chaptersData, setChaptersData] = useState<
+    { id: string; count: number }[]
+  >([])
+
+  const [episodesData, setEpisodesData] = useState<
+    { id: string; count: number }[]
+  >([])
+
   const handleStart = async () => {
     dispatch({ type: 'reset' })
     setDownloadUrl('')
@@ -121,7 +132,10 @@ const AnilistExporter: NextPage = () => {
     setError('')
     setLikesData([])
     setRepliesData([])
-    setCurrentChart('likesPerMonth')
+    setHoursData([])
+    setChaptersData([])
+    setCurrentChart('likes')
+    setCurrentView('perMonth')
 
     let user = {} as AnilistUser
 
@@ -191,24 +205,22 @@ const AnilistExporter: NextPage = () => {
         localActivity.createdAt = activity.createdAt
         localActivity.type = activity.type
         localActivity.likes = activity.likeCount
+        localActivity.progress = activity.progress
+        localActivity.status = activity.status
 
         if (activity.text) {
           localActivity.text = activity.text
         }
 
         if (activity.media) {
+          localActivity.duration = activity.media.duration
+
           if (activity.media.title.english) {
             localActivity.text = activity.media.title.english
           } else {
             history
             localActivity.text = activity.media.title.romaji
           }
-        }
-
-        if (activity.progress && activity.status) {
-          localActivity.status = `${activity.status} ${activity.progress}`
-        } else if (activity.status) {
-          localActivity.status = activity.status
         }
 
         activityHistory.push(localActivity)
@@ -227,7 +239,7 @@ const AnilistExporter: NextPage = () => {
       // increment page
       // hasNextPage = false
       page++
-      await timer(5000)
+      await timer(2000)
     }
 
     dispatch({
@@ -242,6 +254,9 @@ const AnilistExporter: NextPage = () => {
 
     const likesPerMonth = [] as { id: string; count: number }[]
     const repliesPerMonth = [] as { id: string; count: number }[]
+    const hoursWatched = [] as { id: string; count: number }[]
+    const chaptersRead = [] as { id: string; count: number }[]
+    const episodesWatched = [] as { id: string; count: number }[]
 
     activityHistory.forEach((activity) => {
       const date = new Date(activity.createdAt * 1000)
@@ -276,10 +291,126 @@ const AnilistExporter: NextPage = () => {
       } else {
         repliesPerMonth[index2].count += activity.replies
       }
+
+      // set hoursWatched & episodesWatched
+      if (activity.duration && activity.progress && activity.type === 'ANIME_LIST') {
+        // set hoursWatched
+        const index3 = hoursWatched.findIndex(
+          (item) =>
+            item.id ===
+            `${date.toLocaleString('en', { month: 'short' })} ${year}`
+        )
+
+        if (index3 === -1) {
+          let episodeNumber: number
+
+          if (activity.progress.includes('-')) {
+            const startEp = activity.progress.split('-')[0].trim()
+            const endEp = activity.progress.split('-')[1].trim()
+            episodeNumber = Number(endEp) - Number(startEp) + 1
+          } else {
+            episodeNumber = Number(activity.progress)
+          }
+
+          hoursWatched.push({
+            id: `${date.toLocaleString('en', { month: 'short' })} ${year}`,
+            count: (episodeNumber * activity.duration) / 60,
+          })
+        } else {
+          let episodeNumber: number
+
+          if (activity.progress.includes('-')) {
+            const startEp = activity.progress.split('-')[0].trim()
+            const endEp = activity.progress.split('-')[1].trim()
+            episodeNumber = Number(endEp) - Number(startEp) + 1
+          } else {
+            episodeNumber = Number(activity.progress)
+          }
+
+          hoursWatched[index3].count += (episodeNumber * activity.duration) / 60
+        }
+
+        // set episodesWatched
+        const index4 = episodesWatched.findIndex(
+          (item) =>
+            item.id ===
+            `${date.toLocaleString('en', { month: 'short' })} ${year}`
+        )
+
+        if (index4 === -1) {
+          let episodeNumber: number
+
+          if (activity.progress.includes('-')) {
+            const startEp = activity.progress.split('-')[0].trim()
+            const endEp = activity.progress.split('-')[1].trim()
+            episodeNumber = Number(endEp) - Number(startEp) + 1
+          } else {
+            episodeNumber = Number(activity.progress)
+          }
+
+          episodesWatched.push({
+            id: `${date.toLocaleString('en', { month: 'short' })} ${year}`,
+            count: episodeNumber,
+          })
+        } else {
+          let episodeNumber: number
+
+          if (activity.progress.includes('-')) {
+            const startEp = activity.progress.split('-')[0].trim()
+            const endEp = activity.progress.split('-')[1].trim()
+            episodeNumber = Number(endEp) - Number(startEp) + 1
+          } else {
+            episodeNumber = Number(activity.progress)
+          }
+
+          episodesWatched[index4].count += episodeNumber
+        }
+      }
+
+      // set chaptersRead
+      if (activity.progress && activity.type === 'MANGA_LIST') {
+        const index4 = chaptersRead.findIndex(
+          (item) =>
+            item.id ===
+            `${date.toLocaleString('en', { month: 'short' })} ${year}`
+        )
+
+        if (index4 === -1) {
+          let chapterNumber: number
+
+          if (activity.progress.includes('-')) {
+            const startEp = activity.progress.split('-')[0].trim()
+            const endEp = activity.progress.split('-')[1].trim()
+            chapterNumber = Number(endEp) - Number(startEp) + 1
+          } else {
+            chapterNumber = Number(activity.progress)
+          }
+
+          chaptersRead.push({
+            id: `${date.toLocaleString('en', { month: 'short' })} ${year}`,
+            count: chapterNumber,
+          })
+        } else {
+          let chapterNumber: number
+
+          if (activity.progress.includes('-')) {
+            const startEp = activity.progress.split('-')[0].trim()
+            const endEp = activity.progress.split('-')[1].trim()
+            chapterNumber = Number(endEp) - Number(startEp) + 1
+          } else {
+            chapterNumber = Number(activity.progress)
+          }
+
+          chaptersRead[index4].count += chapterNumber
+        }
+      }
     })
 
     setLikesData(likesPerMonth.reverse())
     setRepliesData(repliesPerMonth.reverse())
+    setHoursData(hoursWatched.reverse())
+    setChaptersData(chaptersRead.reverse())
+    setEpisodesData(episodesWatched.reverse())
 
     dispatch({
       type: 'update',
@@ -321,88 +452,216 @@ const AnilistExporter: NextPage = () => {
   }
 
   const labels = (type: string) => {
-    if (type === 'likesPerMonth') {
-      return likesData.map((item) => item.id)
+    if (currentView === 'perMonth') {
+      if (type === 'likes') {
+        return likesData.map((item) => item.id)
+      }
+
+      if (type === 'replies') {
+        return repliesData.map((item) => item.id)
+      }
+
+      if (type === 'hoursWatched') {
+        return hoursData.map((item) => item.id)
+      }
+
+      if (type === 'chaptersRead') {
+        return chaptersData.map((item) => item.id)
+      }
+
+      if (type === 'episodesWatched') {
+        return episodesData.map((item) => item.id)
+      }
     }
 
-    if (type === 'repliesPerMonth') {
-      return repliesData.map((item) => item.id)
-    }
+    if (currentView === 'total') {
+      if (type === 'likes') {
+        const totalLikes = [] as { id: string; count: number }[]
+        likesData.forEach((item) => {
+          if (totalLikes.length === 0) {
+            totalLikes.push(item)
+          } else {
+            totalLikes.push({
+              id: item.id,
+              count: item.count + totalLikes[totalLikes.length - 1].count,
+            })
+          }
+        })
 
-    if (type === 'totalLikes') {
-      const totalLikes = [] as { id: string; count: number }[]
-      likesData.forEach((item) => {
-        if (totalLikes.length === 0) {
-          totalLikes.push(item)
-        } else {
-          totalLikes.push({
-            id: item.id,
-            count: item.count + totalLikes[totalLikes.length - 1].count,
-          })
-        }
-      })
+        return totalLikes.map((item) => item.id)
+      }
 
-      return totalLikes.map((item) => item.id)
-    }
+      if (type === 'replies') {
+        const totalReplies = [] as { id: string; count: number }[]
+        repliesData.forEach((item) => {
+          if (totalReplies.length === 0) {
+            totalReplies.push(item)
+          } else {
+            totalReplies.push({
+              id: item.id,
+              count: item.count + totalReplies[totalReplies.length - 1].count,
+            })
+          }
+        })
 
-    if (type === 'totalReplies') {
-      const totalReplies = [] as { id: string; count: number }[]
-      repliesData.forEach((item) => {
-        if (totalReplies.length === 0) {
-          totalReplies.push(item)
-        } else {
-          totalReplies.push({
-            id: item.id,
-            count: item.count + totalReplies[totalReplies.length - 1].count,
-          })
-        }
-      })
+        return totalReplies.map((item) => item.id)
+      }
 
-      return totalReplies.map((item) => item.id)
+      if (type === 'hoursWatched') {
+        const totalHours = [] as { id: string; count: number }[]
+        hoursData.forEach((item) => {
+          if (totalHours.length === 0) {
+            totalHours.push(item)
+          } else {
+            totalHours.push({
+              id: item.id,
+              count: item.count + totalHours[totalHours.length - 1].count,
+            })
+          }
+        })
+
+        return totalHours.map((item) => item.id)
+      }
+
+      if (type === 'chaptersRead') {
+        const totalChapters = [] as { id: string; count: number }[]
+        chaptersData.forEach((item) => {
+          if (totalChapters.length === 0) {
+            totalChapters.push(item)
+          } else {
+            totalChapters.push({
+              id: item.id,
+              count: item.count + totalChapters[totalChapters.length - 1].count,
+            })
+          }
+        })
+
+        return totalChapters.map((item) => item.id)
+      }
+
+      if (type === 'episodesWatched') {
+        const totalEpisodes = [] as { id: string; count: number }[]
+        episodesData.forEach((item) => {
+          if (totalEpisodes.length === 0) {
+            totalEpisodes.push(item)
+          } else {
+            totalEpisodes.push({
+              id: item.id,
+              count: item.count + totalEpisodes[totalEpisodes.length - 1].count,
+            })
+          }
+        })
+
+        return totalEpisodes.map((item) => item.id)
+      }
     }
 
     return []
   }
 
   const dataset = (type: string) => {
-    if (type === 'likesPerMonth') {
-      return likesData.map((item) => item.count)
+    if (currentView === 'perMonth') {
+      if (type === 'likes') {
+        return likesData.map((item) => item.count)
+      }
+
+      if (type === 'replies') {
+        return repliesData.map((item) => item.count)
+      }
+
+      if (type === 'chaptersRead') {
+        return chaptersData.map((item) => item.count)
+      }
+
+      if (type === 'hoursWatched') {
+        return hoursData.map((item) => item.count)
+      }
+
+      if (type === 'episodesWatched') {
+        return episodesData.map((item) => item.count)
+      }
     }
 
-    if (type === 'repliesPerMonth') {
-      return repliesData.map((item) => item.count)
-    }
+    if (currentView === 'total') {
+      if (type === 'likes') {
+        const totalLikes = [] as { id: string; count: number }[]
+        likesData.forEach((item) => {
+          if (totalLikes.length === 0) {
+            totalLikes.push(item)
+          } else {
+            totalLikes.push({
+              id: item.id,
+              count: item.count + totalLikes[totalLikes.length - 1].count,
+            })
+          }
+        })
 
-    if (type === 'totalLikes') {
-      const totalLikes = [] as { id: string; count: number }[]
-      likesData.forEach((item) => {
-        if (totalLikes.length === 0) {
-          totalLikes.push(item)
-        } else {
-          totalLikes.push({
-            id: item.id,
-            count: item.count + totalLikes[totalLikes.length - 1].count,
-          })
-        }
-      })
+        return totalLikes.map((item) => item.count)
+      }
 
-      return totalLikes.map((item) => item.count)
-    }
+      if (type === 'replies') {
+        const totalReplies = [] as { id: string; count: number }[]
+        repliesData.forEach((item) => {
+          if (totalReplies.length === 0) {
+            totalReplies.push(item)
+          } else {
+            totalReplies.push({
+              id: item.id,
+              count: item.count + totalReplies[totalReplies.length - 1].count,
+            })
+          }
+        })
 
-    if (type === 'totalReplies') {
-      const totalReplies = [] as { id: string; count: number }[]
-      repliesData.forEach((item) => {
-        if (totalReplies.length === 0) {
-          totalReplies.push(item)
-        } else {
-          totalReplies.push({
-            id: item.id,
-            count: item.count + totalReplies[totalReplies.length - 1].count,
-          })
-        }
-      })
+        return totalReplies.map((item) => item.count)
+      }
 
-      return totalReplies.map((item) => item.count)
+      if (type === 'hoursWatched') {
+        const totalHours = [] as { id: string; count: number }[]
+        hoursData.forEach((item) => {
+          if (totalHours.length === 0) {
+            totalHours.push(item)
+          } else {
+            totalHours.push({
+              id: item.id,
+              count: item.count + totalHours[totalHours.length - 1].count,
+            })
+          }
+        })
+
+        return totalHours.map((item) => item.count)
+      }
+
+      if (type === 'chaptersRead') {
+        const totalChapters = [] as { id: string; count: number }[]
+        chaptersData.forEach((item) => {
+          if (totalChapters.length === 0) {
+            totalChapters.push(item)
+          } else {
+            totalChapters.push({
+              id: item.id,
+              count: item.count + totalChapters[totalChapters.length - 1].count,
+            })
+          }
+        })
+
+        return totalChapters.map((item) => item.count)
+      }
+
+      if (type === 'episodesWatched') {
+        const totalEpisodes = [] as { id: string; count: number }[]
+        episodesData.forEach((item) => {
+          if (totalEpisodes.length === 0) {
+            totalEpisodes.push(item)
+          } else {
+            totalEpisodes.push({
+              id: item.id,
+              count: item.count + totalEpisodes[totalEpisodes.length - 1].count,
+            })
+          }
+        })
+
+        return totalEpisodes.map((item) => item.count)
+      }
     }
 
     return []
@@ -472,14 +731,27 @@ const AnilistExporter: NextPage = () => {
               </Text>
 
               <SegmentedControl
-                mb="md"
+                mb="xs"
                 value={currentChart}
                 onChange={setCurrentChart}
                 data={[
-                  { label: 'Likes per month', value: 'likesPerMonth' },
-                  { label: 'Total likes', value: 'totalLikes' },
-                  { label: 'Replies per month', value: 'repliesPerMonth' },
-                  { label: 'Total replies', value: 'totalReplies' },
+                  { label: 'Likes', value: 'likes' },
+                  { label: 'Replies', value: 'replies' },
+                  { label: 'Hours Watched', value: 'hoursWatched' },
+                  { label: 'Chapters Read', value: 'chaptersRead' },
+                  { label: 'Episodes Watched', value: 'episodesWatched' },
+                ]}
+              />
+
+              <br />
+
+              <SegmentedControl
+                mb="md"
+                value={currentView}
+                onChange={setCurrentView}
+                data={[
+                  { label: 'Per Month', value: 'perMonth' },
+                  { label: 'Total', value: 'total' },
                 ]}
               />
 
