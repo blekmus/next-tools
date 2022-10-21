@@ -84,7 +84,7 @@ const NavbarMain: NextPage<Props> = ({ activeGroup, activeSubGroup }) => {
 
       <Navbar.Section className={classes.footer}>
         <Group position="center" mt="md" spacing={2}>
-          <Text>Made with love</Text>
+          <Text>Made with</Text>
 
           <IconHeart
             size={22}
