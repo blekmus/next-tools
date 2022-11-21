@@ -14,7 +14,13 @@ import { FilePond } from 'react-filepond'
 import { useState } from 'react'
 import { FilePondFile, registerPlugin } from 'filepond'
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type'
-import { createVcfFile, filterNumList, formatNumList, mergeNumList } from '../lib/csv-to-vcf'
+import {
+  createVcfFile,
+  createCSVFile,
+  filterNumList,
+  formatNumList,
+  mergeNumList,
+} from '../lib/csv-to-vcf'
 
 const useStyles = createStyles(() => ({
   base: {
@@ -32,6 +38,7 @@ const CsvToVcf: NextPage = () => {
   const [code, setCode] = useState<string>('')
   const [rowHeader, setRowHeader] = useState<string>('')
   const [downloadUrl, setDownloadUrl] = useState<string>('')
+  const [downloadCSVUrl, setDownloadCSVUrl] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
   const [inputNumbers, setInputNumbers] = useState<number>(0)
@@ -57,6 +64,7 @@ const CsvToVcf: NextPage = () => {
       return
     }
     setDownloadUrl('')
+    setDownloadCSVUrl('')
     setLoading(true)
     const merged = await mergeNumList(files, rowHeader)
 
@@ -80,11 +88,20 @@ const CsvToVcf: NextPage = () => {
     setOutputNumbers(formatted.length)
 
     const vcfFile = createVcfFile(formatted)
+    const csvFile = createCSVFile(formatted)
 
+    // vcf file
     const blob = new Blob([vcfFile], { type: 'text/vcard' })
     const file = new File([blob], 'contacts.vcf', { type: 'text/vcard' })
     const url = URL.createObjectURL(file)
     setDownloadUrl(url)
+
+    // csv file
+    const csvBlob = new Blob([csvFile], { type: 'text/csv' })
+    const csvFileObj = new File([csvBlob], 'contacts.csv', { type: 'text/csv' })
+    const csvUrl = URL.createObjectURL(csvFileObj)
+    setDownloadCSVUrl(csvUrl)
+
     setLoading(false)
   }
 
@@ -178,7 +195,18 @@ const CsvToVcf: NextPage = () => {
                   rel="noreferrer"
                   download="contacts.vcf"
                 >
-                  <Button>Download</Button>
+                  <Button mr="sm">Download VCF</Button>
+                </a>
+              )}
+
+              {downloadCSVUrl && (
+                <a
+                  href={downloadCSVUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  download="contacts.csv"
+                >
+                  <Button>Download CSV</Button>
                 </a>
               )}
             </Card>

@@ -95,9 +95,20 @@ const createVcfFile = (formattedNumList: { base: string; num: string }[]) => {
   return vcfFile
 }
 
+const createCSVFile = (formattedNumList: { base: string; num: string }[]) => {
+  const csvFile = formattedNumList
+    .map((formattedNum) => {
+      return `${formattedNum.base},${formattedNum.num}`
+    })
+    .join('\n')
+  
+  return csvFile
+}
+
 export {
-    mergeNumList,
-    filterNumList,
-    formatNumList,
-    createVcfFile
+  mergeNumList,
+  filterNumList,
+  formatNumList,
+  createVcfFile,
+  createCSVFile,
 }
