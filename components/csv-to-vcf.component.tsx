@@ -124,7 +124,7 @@ const CsvToVcf: NextPage = () => {
               <FilePond
                 onupdatefiles={setFiles}
                 allowMultiple={true}
-                maxFiles={10}
+                maxFiles={100}
                 allowReorder={false}
                 acceptedFileTypes={['text/csv']}
                 storeAsFile={true}
