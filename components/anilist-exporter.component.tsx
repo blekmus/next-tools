@@ -309,7 +309,7 @@ const AnilistExporter: NextPage = () => {
             const endEp = activity.progress.split('-')[1].trim()
             episodeNumber = Number(endEp) - Number(startEp) + 1
           } else {
-            episodeNumber = Number(activity.progress)
+            episodeNumber = 1
           }
 
           hoursWatched.push({
@@ -324,7 +324,7 @@ const AnilistExporter: NextPage = () => {
             const endEp = activity.progress.split('-')[1].trim()
             episodeNumber = Number(endEp) - Number(startEp) + 1
           } else {
-            episodeNumber = Number(activity.progress)
+            episodeNumber = 1
           }
 
           hoursWatched[index3].count += (episodeNumber * activity.duration) / 60
@@ -345,8 +345,13 @@ const AnilistExporter: NextPage = () => {
             const endEp = activity.progress.split('-')[1].trim()
             episodeNumber = Number(endEp) - Number(startEp) + 1
           } else {
-            episodeNumber = Number(activity.progress)
+            episodeNumber = 1
           }
+
+          console.log({
+            id: `${date.toLocaleString('en', { month: 'short' })} ${year}`,
+            count: episodeNumber,
+          })
 
           episodesWatched.push({
             id: `${date.toLocaleString('en', { month: 'short' })} ${year}`,
@@ -360,7 +365,7 @@ const AnilistExporter: NextPage = () => {
             const endEp = activity.progress.split('-')[1].trim()
             episodeNumber = Number(endEp) - Number(startEp) + 1
           } else {
-            episodeNumber = Number(activity.progress)
+            episodeNumber = 1
           }
 
           episodesWatched[index4].count += episodeNumber
@@ -383,7 +388,7 @@ const AnilistExporter: NextPage = () => {
             const endEp = activity.progress.split('-')[1].trim()
             chapterNumber = Number(endEp) - Number(startEp) + 1
           } else {
-            chapterNumber = Number(activity.progress)
+            chapterNumber = 1
           }
 
           chaptersRead.push({
@@ -398,7 +403,7 @@ const AnilistExporter: NextPage = () => {
             const endEp = activity.progress.split('-')[1].trim()
             chapterNumber = Number(endEp) - Number(startEp) + 1
           } else {
-            chapterNumber = Number(activity.progress)
+            chapterNumber = 1
           }
 
           chaptersRead[index4].count += chapterNumber
