@@ -73,17 +73,15 @@ const LinksGroup = ({
   link
 }: LinksGroupProps) => {
   const [opened, setOpened] = useState(initiallyOpened || false)
-
   const { classes, theme } = useStyles({ initiallyOpened })
 
   const ChevronIcon = theme.dir === 'ltr' ? IconChevronRight : IconChevronLeft
 
   if (!links || link) {
     return (
-      <Link href={link ? link : ''}>
+      <Link href={link ? link : ''} className={classes.control}>
         <UnstyledButton
-          className={classes.control}
-          component="a"
+          
         >
           <Group position="apart" spacing={0}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -97,6 +95,7 @@ const LinksGroup = ({
           </Group>
         </UnstyledButton>
       </Link>
+
     )
   } else {
     const items = links.map((link) => {
@@ -124,16 +123,16 @@ const LinksGroup = ({
                 {label}
               </Box>
             </Box>
-              <ChevronIcon
-                className={classes.chevron}
-                size={14}
-                stroke={1.5}
-                style={{
-                  transform: opened
-                    ? `rotate(${theme.dir === 'rtl' ? -90 : 90}deg)`
-                    : 'none',
-                }}
-              />
+            <ChevronIcon
+              className={classes.chevron}
+              size={14}
+              stroke={1.5}
+              style={{
+                transform: opened
+                  ? `rotate(${theme.dir === 'rtl' ? -90 : 90}deg)`
+                  : 'none',
+              }}
+            />
           </Group>
         </UnstyledButton>
         <Collapse in={opened}>{items}</Collapse>

@@ -35,13 +35,8 @@ const LinksSubGroup = ({
   const { classes } = useStyles({ opened })
 
   return (
-    <Link href={link.link}>
-      <Text
-        component="a"
-        href={link.link}
-        key={link.label}
-        className={classes.link}
-      >
+    <Link href={link.link} className={classes.link}>
+      <Text key={link.label}>
         {link.label}
       </Text>
     </Link>
