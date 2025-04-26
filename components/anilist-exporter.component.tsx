@@ -49,12 +49,21 @@ const QUERY_HISTORY = gql`
     Page(page: $page, perPage: $per_page) {
       activities(userId: $user, sort: [ID_DESC]) {
         ... on ListActivity {
+          id
           status
           progress
           createdAt
           type
           likeCount
-          replyCount
+          replies {
+            id
+            createdAt
+            likeCount
+            text
+            user {
+              name
+            }
+          }
           siteUrl
           media {
             duration
@@ -71,7 +80,15 @@ const QUERY_HISTORY = gql`
           siteUrl
           likeCount
           createdAt
-          replyCount
+          replies {
+            id
+            createdAt
+            likeCount
+            text
+            user {
+              name
+            }
+          }
         }
       }
     }
@@ -103,6 +120,7 @@ const AnilistExporter: NextPage = () => {
   const [downloadUrl, setDownloadUrl] = useState('')
   const [currentChart, setCurrentChart] = useState('likes')
   const [currentView, setCurrentView] = useState('perMonth')
+  const [delay, setDelay] = useState(5000)
 
   const [state, dispatch] = useReducer(reducer, { output: '' })
 
@@ -173,7 +191,7 @@ const AnilistExporter: NextPage = () => {
     dispatch({
       type: 'update',
       payload:
-        'THIS MIGHT TAKE A WHILE. 5 second delay is added between each request to prevent rate limiting',
+        `THIS MIGHT TAKE A WHILE. ${delay} millisecond is added between each request to prevent rate limiting`,
     })
 
     // loop through all activity history pages
@@ -200,9 +218,16 @@ const AnilistExporter: NextPage = () => {
           return
         }
 
-        localActivity.url = activity.siteUrl
-        localActivity.replies = activity.replyCount
+        localActivity.id = activity.id
+        localActivity.createdAtString = new Date(
+          activity.createdAt * 1000
+        ).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
         localActivity.createdAt = activity.createdAt
+        localActivity.url = activity.siteUrl
         localActivity.type = activity.type
         localActivity.likes = activity.likeCount
         localActivity.progress = activity.progress
@@ -218,11 +243,29 @@ const AnilistExporter: NextPage = () => {
           if (activity.media.title.english) {
             localActivity.text = activity.media.title.english
           } else {
-            history
             localActivity.text = activity.media.title.romaji
           }
         }
 
+        if (activity.replies) {
+          localActivity.replies = activity.replies.map((reply) => {
+            return {
+              id: reply.id,
+              createdAt: reply.createdAt,
+              text: reply.text,
+              user: reply.user.name,
+              likes: reply.likeCount,
+              createdAtString: new Date(
+                reply.createdAt * 1000
+              ).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            }
+          })
+        }
+      
         activityHistory.push(localActivity)
       })
 
@@ -236,10 +279,8 @@ const AnilistExporter: NextPage = () => {
         payload: `loaded page ${page} with ${history.Page.activities.length} activities. total cleaned ${activityHistory.length}`,
       })
 
-      // increment page
-      // hasNextPage = false
       page++
-      await timer(2000)
+      await timer(delay)
     }
 
     dispatch({
@@ -286,10 +327,10 @@ const AnilistExporter: NextPage = () => {
       if (index2 === -1) {
         repliesPerMonth.push({
           id: `${date.toLocaleString('en', { month: 'short' })} ${year}`,
-          count: activity.replies,
+          count: activity.replies?.length || 0,
         })
       } else {
-        repliesPerMonth[index2].count += activity.replies
+        repliesPerMonth[index2].count += activity.replies?.length || 0
       }
 
       // set hoursWatched & episodesWatched
@@ -695,7 +736,7 @@ const AnilistExporter: NextPage = () => {
           <Box mt={30} mb="md">
             <Card mb="lg">
               <Title order={4} mb="md">
-                Enter Anilist username
+                Enter Anilist username & Request delay
               </Title>
 
               <Group>
@@ -704,10 +745,22 @@ const AnilistExporter: NextPage = () => {
                   variant="filled"
                   placeholder="blekmus"
                   size="md"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    if (e.currentTarget.value.length > 0) {
+                      setUsername(e.currentTarget.value)
+                    }
+                  }}
+                />
+                <Input
+                  sx={{ maxWidth: '250px' }}
+                  variant="filled"
+                  placeholder="5000ms is the default"
+                  size="md"
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setUsername(e.currentTarget.value)
+                    setDelay(Number(e.currentTarget.value))
                   }
                 />
+
 
                 <Button color="gray" onClick={handleStart} loading={loading}>
                   Start the magic
